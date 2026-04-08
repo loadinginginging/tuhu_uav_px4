@@ -34,6 +34,7 @@
 #include <gtest/gtest.h>
 
 #include "framework.h"
+#include "failsafe.h"
 #include <uORB/topics/vehicle_status.h>
 
 // to run: make tests TESTFILTER=failsafe_test
@@ -368,4 +369,39 @@ TEST_F(FailsafeTest, defer)
 	updated_user_intented_mode = failsafe.update(time, state, false, false, failsafe_flags);
 	ASSERT_EQ(failsafe.selectedAction(), FailsafeBase::Action::Terminate);
 	ASSERT_FALSE(failsafe.failsafeDeferred());
+}
+
+TEST_F(FailsafeTest, mission_finished_link_loss_ignored_when_landed)
+{
+	Failsafe failsafe(nullptr);
+
+	failsafe_flags_s failsafe_flags{};
+	FailsafeBase::State state{};
+	state.armed = true;
+	state.user_intended_mode = vehicle_status_s::NAVIGATION_STATE_AUTO_MISSION;
+	state.vehicle_type = vehicle_status_s::VEHICLE_TYPE_ROTARY_WING;
+	hrt_abstime time = 1_s;
+
+	param_t com_rcl_except = param_handle(px4::params::COM_RCL_EXCEPT);
+	int32_t rc_loss_except_mission = 1 << 0;
+	param_set(com_rcl_except, &rc_loss_except_mission);
+
+	param_t nav_dll_act = param_handle(px4::params::NAV_DLL_ACT);
+	int32_t nav_dll_disabled = 0;
+	param_set(nav_dll_act, &nav_dll_disabled);
+
+	failsafe.updateParams();
+	failsafe.update(time, state, false, false, failsafe_flags);
+	ASSERT_EQ(failsafe.selectedAction(), FailsafeBase::Action::None);
+
+	time += 10_ms;
+	state.mission_finished = true;
+	failsafe_flags.gcs_connection_lost = true;
+	failsafe.update(time, state, false, false, failsafe_flags);
+	ASSERT_EQ(failsafe.selectedAction(), FailsafeBase::Action::Hold);
+
+	time += 10_ms;
+	state.landed = true;
+	failsafe.update(time, state, false, false, failsafe_flags);
+	ASSERT_EQ(failsafe.selectedAction(), FailsafeBase::Action::None);
 }
