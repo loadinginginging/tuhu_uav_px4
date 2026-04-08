@@ -21,6 +21,16 @@ git submodule update --init --recursive
 echo "[3/3] Installing Ubuntu build dependencies"
 bash "${ROOT_DIR}/Tools/setup/ubuntu.sh" "$@"
 
+OPTIONAL_REQUIREMENTS="${ROOT_DIR}/Tools/setup/optional-requirements.txt"
+if [[ -f "${OPTIONAL_REQUIREMENTS}" ]]; then
+	echo "Installing additional Python build requirements"
+	if [[ -n "${VIRTUAL_ENV:-}" ]]; then
+		python -m pip install -r "${OPTIONAL_REQUIREMENTS}"
+	else
+		python3 -m pip install --user -r "${OPTIONAL_REQUIREMENTS}"
+	fi
+fi
+
 cat <<EOF
 
 Environment setup finished.

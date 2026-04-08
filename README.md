@@ -31,7 +31,7 @@ git submodule update --init --recursive
 说明：
 
 - 默认使用仓库内的 `Tools/setup/ubuntu.sh` 安装依赖。
-- 脚本会安装 PX4 NuttX 工具链、Python 依赖和常用编译工具。
+- 脚本会安装 PX4 NuttX 工具链、Python 依赖、`optional-requirements.txt` 里的额外构建依赖和常用编译工具。
 - 脚本结束后，首次使用建议重新打开终端，或执行 `source ~/.profile`，让 `arm-none-eabi-gcc` 的 PATH 生效。
 
 如果你只想装固件编译环境、不装仿真依赖，可以这样执行：
