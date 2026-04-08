@@ -12,6 +12,7 @@
 .project
 .settings
 .swp
+.codex
 .~lock.*
 Testing/
 Packages/*

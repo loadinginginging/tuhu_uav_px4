@@ -18,9 +18,10 @@ jobs:
           px4_fmu-v5,
           ]
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
       with:
         token: ${{secrets.ACCESS_TOKEN}}
+        submodules: recursive
 
     - name: make ${{matrix.config}}
       env:

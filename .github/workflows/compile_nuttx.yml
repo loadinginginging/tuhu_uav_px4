@@ -80,9 +80,10 @@ jobs:
           siyi_n7
           ]
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
       with:
         token: ${{secrets.ACCESS_TOKEN}}
+        submodules: recursive
 
     - name: Prepare ccache timestamp
       id: ccache_cache_timestamp

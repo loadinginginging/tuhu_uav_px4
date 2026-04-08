@@ -14,9 +14,10 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
       with:
         token: ${{secrets.ACCESS_TOKEN}}
+        submodules: recursive
     - id: set-matrix
       run: echo "::set-output name=matrix::$(./Tools/generate_board_targets_json.py)"
   build:
@@ -26,9 +27,10 @@ jobs:
       matrix: ${{fromJson(needs.enumerate_targets.outputs.matrix)}}
     container: ${{ matrix.container }}
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
       with:
         token: ${{secrets.ACCESS_TOKEN}}
+        submodules: recursive
 
     - name: ownership workaround
       run: git config --system --add safe.directory '*'
@@ -54,4 +56,3 @@ jobs:
         AWS_REGION: 'us-west-1'
         SOURCE_DIR: 'build/${{ matrix.target }}/_metadata/'
         DEST_DIR: 'Firmware/${{ env.version }}/${{ matrix.target }}/'
-

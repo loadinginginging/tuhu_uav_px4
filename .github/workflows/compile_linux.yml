@@ -24,9 +24,10 @@ jobs:
           scumaker_pilotpi_default,
           ]
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
       with:
         token: ${{secrets.ACCESS_TOKEN}}
+        submodules: recursive
     - name: ownership workaround
       run: git config --system --add safe.directory '*'
     - name: Prepare ccache timestamp

@@ -13,9 +13,10 @@ jobs:
     runs-on: ubuntu-latest
     container: px4io/px4-dev-base-focal:2021-09-08
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
       with:
         token: ${{ secrets.ACCESS_TOKEN }}
+        submodules: recursive
 
     - name: airframe metadata
       run: |
@@ -39,9 +40,10 @@ jobs:
     runs-on: ubuntu-latest
     container: px4io/px4-dev-base-focal:2021-09-08
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
       with:
         token: ${{ secrets.ACCESS_TOKEN }}
+        submodules: recursive
 
     - name: module documentation
       run: |
@@ -54,9 +56,10 @@ jobs:
     runs-on: ubuntu-latest
     container: px4io/px4-dev-base-focal:2021-09-08
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
       with:
         token: ${{ secrets.ACCESS_TOKEN }}
+        submodules: recursive
 
     - name: parameter metadata
       run: |
@@ -78,9 +81,10 @@ jobs:
     runs-on: ubuntu-latest
     container: px4io/px4-dev-base-focal:2021-09-08
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
       with:
         token: ${{ secrets.ACCESS_TOKEN }}
+        submodules: recursive
 
     - name: events metadata
       run: |
@@ -105,9 +109,10 @@ jobs:
     runs-on: ubuntu-latest
     container: px4io/px4-dev-nuttx-focal:2022-08-12
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
       with:
         token: ${{ secrets.ACCESS_TOKEN }}
+        submodules: recursive
 
     - name: uORB graph
       run: |
@@ -120,9 +125,10 @@ jobs:
     runs-on: ubuntu-latest
     container: px4io/px4-dev-base-focal:2021-09-08
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
       with:
         token: ${{ secrets.ACCESS_TOKEN }}
+        submodules: recursive
 
     - name: PX4 ROS2 msgs
       run: |
