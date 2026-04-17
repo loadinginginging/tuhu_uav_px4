@@ -1,0 +1,101 @@
+1. 
+  修改文件：~/src/lib/rl_tools/rl_tools/include/rl_tools/nn_models/sequential/
+  model.h
+
+  修改位置：find_max_hiddend_dim() 函数内（约第 61 行）
+
+  修改前：
+  constexpr TI CONTENT_OUTPUT_DIM = product(typename SPEC::CONTENT::OUTPUT_SHAPE{});
+
+  修改后：
+  [[maybe_unused]] constexpr TI CONTENT_OUTPUT_DIM = product(typename SPEC::CONTENT::OUTPUT_SHAPE{});
+
+  修改原因：
+  在部分模板实例化路径下，CONTENT_OUTPUT_DIM 可能未被使用，添加 [[maybe_unused]] 以避免未使用常量触发
+  warning-as-error。
+
+2.
+  修改文件：~/src/lib/rl_tools/rl_tools/include/rl_tools/nn/layers/gru/
+  operations_generic.h
+
+  修改位置：reset() 函数签名附近（约第 88 行）
+
+  修改前：
+  RL_TOOLS_FUNCTION_PLACEMENT void reset(DEVICE& device, const nn::layers::gru::LayerForward<SPEC>& layer,
+  nn::layers::gru::State<STATE_SPEC>& state, RNG&, Mode<MODE> mode = Mode<mode::Default<>>{}) {
+
+  修改后：
+  RL_TOOLS_FUNCTION_PLACEMENT void reset(DEVICE& device, const nn::layers::gru::LayerForward<SPEC>& layer,
+  nn::layers::gru::State<STATE_SPEC>& state, RNG&, [[maybe_unused]] Mode<MODE> mode =
+  Mode<mode::Default<>>{}) {
+
+  修改原因：
+  在 MODE = rl_tools::mode::Default<> 的模板实例化下，if constexpr(mode::is<MODE,
+  mode::sequential::ResetMask>) 分支会被编译期裁剪，导致参数 mode 在该实例中未被使用，触发 -Wunused-but-set-
+  parameter，并因 -Werror 导致编译失败。保留参数名 mode 是为了兼容 ResetMask 分支中的 mode.mask 访问，添加
+  [[maybe_unused]] 可以同时消除未使用参数告警。
+
+3.
+fmu-v6c板子的default新增：
++++ b/boards/px4/fmu-v6c/raptor.px4board
+@@ -35,2 +35,3 @@
+ CONFIG_DRIVERS_UAVCAN=y
++CONFIG_LIB_RL_TOOLS=y
+ CONFIG_MODULES_AIRSPEED_SELECTOR=y
+@@ -64,2 +65,3 @@
+ CONFIG_MODULES_MC_POS_CONTROL=y
++CONFIG_MODULES_MC_RAPTOR=y
+ CONFIG_MODULES_MC_RATE_CONTROL=y
+
+4.
+  修改文件：~/src/lib/rl_tools/rl_tools/include/rl_tools/persist/backends/tar/operations_generic.h
+
+  修改位置：dim_helper_read() 函数内（约第 193 行）
+
+  修改前：
+  char key[] = "dim_0";
+  key[4] = '0' + DIM;
+  if constexpr(DIM < SPEC::SHAPE::LENGTH){
+
+  修改后：
+  if constexpr(DIM < SPEC::SHAPE::LENGTH){
+      char key[] = "dim_0";
+      key[4] = '0' + DIM;
+
+  修改原因：
+  在模板递归终止分支 DIM == SPEC::SHAPE::LENGTH 下，if constexpr 会直接进入 else 分支返回 true，导致 key 在
+  该实例中被赋值但未使用，触发 -Wunused-but-set-variable，并因 -Werror 导致编译失败。将 key 的定义与赋值移入
+  有效分支即可消除该告警且不改变逻辑。
+
+5.
+  修改文件：~/src/lib/rl_tools/rl_tools/include/rl_tools/persist/backends/tar/operations_generic.h
+
+  修改位置：dim_helper_read() 函数签名附近（约第 191 行）
+
+  修改前：
+  RL_TOOLS_FUNCTION_PLACEMENT bool dim_helper_read(DEVICE& device, char* metadata){
+
+  修改后：
+  RL_TOOLS_FUNCTION_PLACEMENT bool dim_helper_read(DEVICE& device, [[maybe_unused]] char* metadata){
+
+  修改原因：
+  在模板递归终止分支 DIM == SPEC::SHAPE::LENGTH 下，if constexpr 会直接进入 else 分支返回 true，导致参数
+  metadata 在该实例中未被使用，触发 -Wunused-but-set-parameter，并因 -Werror 导致编译失败。为保持函数签名和
+  递归调用不变，给 metadata 添加 [[maybe_unused]] 消除告警。
+
+6.
+  如果你的目标是“default 里也要保留 mc_raptor”，那就要像 raptor.px4board 一样，把这些也关掉来腾空间：
+
+  - CONFIG_MODULES_FW_ATT_CONTROL
+  - CONFIG_MODULES_FW_AUTOTUNE_ATTITUDE_CONTROL
+  - CONFIG_MODULES_FW_MODE_MANAGER
+  - CONFIG_MODULES_FW_LATERAL_LONGITUDINAL_CONTROL
+  - CONFIG_MODULES_FW_RATE_CONTROL
+  - CONFIG_MODULES_VTOL_ATT_CONTROL
+  最小建议是：
+
+  - 想保留 default 语义：关掉 MC_RAPTOR
+  问题定位：px4_fmu-v6c_default 已通过编译阶段，但在最终链接阶段发生 FLASH 溢出，错误为 region 'FLASH'
+  overflowed by 6060 bytes。该问题不是源码语法错误，而是板级配置中 default.px4board 同时启用了
+  CONFIG_MODULES_MC_RAPTOR=y、CONFIG_LIB_RL_TOOLS=y，以及固定翼/VTOL相关模块，导致固件体积超出 fmu-v6c 的
+  1920 KB Flash 限制。
